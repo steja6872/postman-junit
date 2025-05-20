@@ -1,0 +1,51 @@
+name: CI with Java Tests + Postman API Tests
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout Code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Java for Maven
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      # Run Java JUnit tests and generate reports
+      - name: Run Java JUnit Tests
+        run: mvn test surefire-report:report-only
+
+      # Install Postman CLI
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      # Login to Postman CLI
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      # Run Postman Collection with JUnit and HTML report export
+      - name: Run Postman API Tests
+        run: |
+          mkdir -p postman/reports
+          postman collection run "44958345-c543857f-44c7-4fe0-a1be-f344168271c0" \
+            --reporters cli,junit,html \
+            --reporter-junit-export postman/reports/postman-junit.xml \
+            --reporter-html-export postman/reports/postman-report.html
+
+      # Upload Both Java and Postman Test Reports
+      - name: Upload All Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports
+            target/site
+            postman/reports
