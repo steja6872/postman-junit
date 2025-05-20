@@ -42,7 +42,7 @@ jobs:
 
       # Upload Both Java and Postman Test Reports
       - name: Upload All Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: test-reports
           path: |
